@@ -1,0 +1,9 @@
+Q4.1 HTTP Get的方法   NSURL *url = [NSURL URLWithString:@"http://192.168.3.47:8888/09.zip"];    // 默认就是GET请求    NSURLRequest *request = [NSURLRequest requestWithURL:url];    [NSURLConnection connectionWithRequest:request delegate:self];Q4.2 HTTP Post上传文本的代码Q4.3 HTTP Post表单Q4.4 HTTP 获取文件信息Q4.5 TCP 
+
+Q4.6 socket
+
+Q4.7 UDP
+
+Q4.8 son和XML解析
+
+Q4.9 

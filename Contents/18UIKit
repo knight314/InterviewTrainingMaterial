@@ -1,0 +1,7 @@
+1，所有UIKit的继承关系
+凡是使用过的都记录一下
+
+
+UIControl
+UIView
+UILabel,UIImageView,

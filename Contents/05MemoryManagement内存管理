@@ -1,0 +1,5 @@
+Q5.1 循环引用Q5.2 MRC写viewDidLoad中增加一个UIImageViewQ5.3 ARC MRC混编
+Q5.4 制造一个block循环引用，证明循环引用已经发生，提供解决方法。
+Q5.5 制造一个由2个对象进行强引用的循环引用，证明循环引用已经发生，提供解决方法。
+Q5.6 MRC编写copy,retain,strong的NSString的getter方法
+

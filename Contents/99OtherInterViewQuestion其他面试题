@@ -1,0 +1,1239 @@
+多线程1
+
+1.	Q1.1 请写出以下几种情况的代码，同步串行队列，同步并发队列，异步串行队列，异步并发队列
+
+//同步函数 + 串行队列
+- (void)syncSerial {
+    
+    NSLog(@"start %s -------%@",__FUNCTION__,[NSThread currentThread]);
+    /* 创建串行队列 */
+    dispatch_queue_t queue = dispatch_queue_create("https://teilim.com", DISPATCH_QUEUE_SERIAL);
+    
+    /* 将执行任务加入队列 */
+    dispatch_sync(queue, ^{
+        for (NSInteger i = 0; i<5; i++) {
+            NSLog(@"task A time %lo -----%@", i,[NSThread currentThread]);
+        }
+    });
+    dispatch_sync(queue, ^{
+        for (NSInteger i = 0; i<5; i++) {
+            NSLog(@"task B time %lo -----%@", i,[NSThread currentThread]);
+        }
+    });
+    NSLog(@"finish %s -------%@",__FUNCTION__,[NSThread currentThread]);
+
+}
+
+//同步函数 + 并发队列
+- (void)syncConcurrent {
+    
+    NSLog(@"start %s -------%@",__FUNCTION__,[NSThread currentThread]);
+    /* 创建并发队列 */
+    dispatch_queue_t queue = dispatch_queue_create("https://teilim.com", DISPATCH_QUEUE_CONCURRENT);
+    
+    /* 将执行任务加入队列 */
+    dispatch_sync(queue, ^{
+        for (NSInteger i = 0; i<5; i++) {
+                NSLog(@"task A time %lo -----%@", i,[NSThread currentThread]);
+        }
+    });
+    dispatch_sync(queue, ^{
+        for (NSInteger i = 0; i<5; i++) {
+              NSLog(@"task B time %lo -----%@", i,[NSThread currentThread]);
+        }
+    });
+    NSLog(@"finish %s -------%@",__FUNCTION__,[NSThread currentThread]);
+}
+//异步函数 + 串行队列
+- (void)asyncSerial {
+    
+    NSLog(@"start %s -------%@",__FUNCTION__,[NSThread currentThread]);
+    
+    /* 创建串行队列 */
+    dispatch_queue_t queue = dispatch_queue_create("https://teilim.com", DISPATCH_QUEUE_SERIAL);
+    
+    /* 将任务加入队列 */
+    dispatch_async(queue, ^{
+        for (NSInteger i = 0; i<5; i++) {
+            NSLog(@"task A time %lo -----%@", i,[NSThread currentThread]);
+        }
+    });
+    dispatch_async(queue, ^{
+        for (NSInteger i = 0; i<5; i++) {
+              NSLog(@"task B time %lo -----%@", i,[NSThread currentThread]);
+        }
+    });
+    
+    NSLog(@"finish %s -------%@",__FUNCTION__,[NSThread currentThread]);
+
+}
+
+//异步函数 ＋ 并发队列
+- (void)asyncConcurrent {
+    
+    NSLog(@"start %s -------%@",__FUNCTION__,[NSThread currentThread]);
+    
+    /* 创建并发队列 */
+    dispatch_queue_t queue = dispatch_queue_create("com.520it.queue", DISPATCH_QUEUE_CONCURRENT);
+    
+    /* 将任务加入队列 */
+    dispatch_async(queue, ^{
+        for (NSInteger i = 0; i<5; i++) {
+             NSLog(@"task A time %lo -----%@", i,[NSThread currentThread]);
+        }
+    });
+    dispatch_async(queue, ^{
+        for (NSInteger i = 0; i<5; i++) {
+              NSLog(@"task B time %lo -----%@", i,[NSThread currentThread]);
+        }
+    });
+    
+    NSLog(@"finish %s -------%@",__FUNCTION__,[NSThread currentThread]);
+
+}
+
+ 
+
+2.	Q1.2请写出dispatch_group_t的实践代码
+   dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_async(group, queue, ^{
+        NSLog(@"download image 1");
+        /*加载图片1 */ });
+    dispatch_group_async(group, queue, ^{
+         NSLog(@"download image 2");
+        /*加载图片2 */ });
+    dispatch_group_async(group, queue, ^{
+         NSLog(@"download image 3");
+        /*加载图片3 */ });
+    
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        // 合并图片
+        NSLog(@"combine download images");
+    });
+
+
+
+3.	Q1.3 请写出dispatch barrier的用法
+-(void)gcdBarrier{
+    dispatch_queue_t concurrentQueue = dispatch_queue_create("my.concurrent.queue", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-1");
+    });
+    dispatch_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-2");
+    });
+    dispatch_barrier_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-barrier");
+    });
+    dispatch_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-3");
+    });
+    dispatch_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-4");
+    });
+
+
+}
+4.	Q1.4 请写出在子线程中异步下载图片，然后刷新主线程的代码
+   NSLog(@"before download image");
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
+        NSURL * url = [NSURL
+                       URLWithString:@"http://avatar.csdn.net/2/C/D/1_totogo2010.jpg"];
+        NSData * data = [[NSData alloc]initWithContentsOfURL:url];
+        UIImage *image = [[UIImage alloc]initWithData:data];
+        if (data != nil) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.imageView.image = image;
+                NSLog(@"download the image data");
+            });
+        }
+    });
+    
+    NSLog(@"end download image");
+
+5.	Q1.5 请写出单例的代码
+
+// 定义一份变量(整个程序运行过程中, 只有1份)
+static id _instance;
+
+-(id)init
+{
+    static id obj=nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken,^{
+        if ((obj =[super init])!=nil) {
+            //加载资源
+        }
+
+    });
+    self=obj;
+    return self;
+}
+
++ (id)allocWithZone:(struct _NSZone *)zone
+{
+    // 里面的代码永远只执行1次
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _instance = [super allocWithZone:zone];
+    });
+
+    // 返回对象
+    return _instance;
+}
+
++ (instancetype)sharedProgressTool
+{
+    // 里面的代码永远只执行1次
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _instance = [[self alloc] init];
+    });
+
+    // 返回对象
+    return _instance;
+}
+
++ (id)copyWithZone:(struct _NSZone *)zone
+{
+    return _instance;
+}
+
+
+6.	Q1.6 请写出锁的代码
+不带锁卖票
+-(void)sellTicketsWithoutLock{
+    
+    dispatch_queue_t queue1=dispatch_queue_create("com.sellTicket", DISPATCH_QUEUE_CONCURRENT);
+    
+    for (int i=0; i<100; i++) {
+        
+        
+        dispatch_async(queue1, ^{
+            
+            self.numberOfTickets=self.numberOfTickets-1;
+            self.accountBalance=self.accountBalance+10;
+             NSLog(@"ticket no==%ld balance=%.2f total=%@",(long)self.numberOfTickets,self.accountBalance,(self.numberOfTickets*10+self.accountBalance)==100000?@"YES":@"NO");
+            
+        });
+        
+        dispatch_async(queue1, ^{
+            
+            self.numberOfTickets=self.numberOfTickets-1;
+            self.accountBalance=self.accountBalance+10;
+            NSLog(@"ticket no==%ld balance=%.2f total=%@",(long)self.numberOfTickets,self.accountBalance,(self.numberOfTickets*10+self.accountBalance)==100000?@"YES":@"NO");
+            
+        });
+        
+        dispatch_async(queue1, ^{
+            
+            self.numberOfTickets=self.numberOfTickets-1;
+            self.accountBalance=self.accountBalance+10;
+            NSLog(@"ticket no==%ld balance=%.2f total=%@",(long)self.numberOfTickets,self.accountBalance,(self.numberOfTickets*10+self.accountBalance)==100000?@"YES":@"NO");
+            
+        });
+    }
+    
+  
+    
+    
+}
+
+带锁语法的卖票
+-(void)sellTicketsWithLock{
+
+    dispatch_queue_t queue1=dispatch_queue_create("com.sellTicket", DISPATCH_QUEUE_CONCURRENT);
+   
+        for (int i=0; i<100; i++) {
+            
+          
+                dispatch_async(queue1, ^{
+                    @synchronized (self) {
+                        self.numberOfTickets=self.numberOfTickets-1;
+                        self.accountBalance=self.accountBalance+10;
+                      NSLog(@"ticket no==%ld balance=%.2f total=%@",(long)self.numberOfTickets,self.accountBalance,(self.numberOfTickets*10+self.accountBalance)==100000?@"YES":@"NO");
+                        
+                    }
+                    
+                });
+            
+            dispatch_async(queue1, ^{
+                @synchronized (self) {
+                    self.numberOfTickets=self.numberOfTickets-1;
+                    self.accountBalance=self.accountBalance+10;
+                    NSLog(@"ticket no==%ld balance=%.2f total=%@",(long)self.numberOfTickets,self.accountBalance,(self.numberOfTickets*10+self.accountBalance)==100000?@"YES":@"NO");
+                    
+                }
+                
+            });
+            
+            dispatch_async(queue1, ^{
+                @synchronized (self) {
+                    self.numberOfTickets=self.numberOfTickets-1;
+                    self.accountBalance=self.accountBalance+10;
+                    NSLog(@"ticket no==%ld balance=%.2f total=%@",(long)self.numberOfTickets,self.accountBalance,(self.numberOfTickets*10+self.accountBalance)==100000?@"YES":@"NO");
+                    
+                }
+                
+            });
+            
+         
+            
+        }
+ 
+}
+
+7.	Q1.7 请写出串行队列防止多线程冲突的问题
+串行队列卖票
+-(void)sellTicketsWithSerialQueue{
+    dispatch_queue_t queue1=dispatch_queue_create("com.sellTicket", DISPATCH_QUEUE_CONCURRENT);
+    for (int i=0; i<1000; i++) {
+        dispatch_async(queue1, ^{
+            
+            [self sellTicketInSerialQueue];
+        });
+        
+        dispatch_async(queue1, ^{
+            
+            [self sellTicketInSerialQueue];
+        });
+        
+        dispatch_async(queue1, ^{
+            
+            [self sellTicketInSerialQueue];
+        });
+    }
+}
+串行队列异步执行来卖票
+-(void)sellTicketInSerialQueue{
+    dispatch_async(self.sellTicketQueue, ^{
+                self.numberOfTickets=self.numberOfTickets-1;
+                self.accountBalance=self.accountBalance+10;
+                NSLog(@"ticket no==%ld balance=%.2f total=%@",(long)self.numberOfTickets,self.accountBalance,(self.numberOfTickets*10+self.accountBalance)==100000?@"YES":@"NO");
+    });
+        
+}
+//定义串行的卖票队列
+@property (nonatomic,strong) dispatch_queue_t sellTicketQueue;
+//卖票队列的初试化
+-(dispatch_queue_t)sellTicketQueue{
+    if (!_sellTicketQueue) {
+        _sellTicketQueue=dispatch_queue_create("SellTicketQueue", DISPATCH_QUEUE_SERIAL);
+    }
+    return _sellTicketQueue;
+
+}
+Q1.8 NSOperation的基本用法
+单个NSOperation
+NSBlockOperation 添加多个任务，完成某个任务以后继续
+NSBlockOperation *operation1 = [NSBlockOperation blockOperationWithBlock:^{
+        for (int i = 0; i<10; i++) {
+            NSLog(@"NSBlockOperation------下载图片-1-1-%@", [NSThread currentThread]);
+        }
+}];
+[operation1 addExecutionBlock:^{
+        
+        NSLog(@"NSBlockOperation------下载图片-1-2-%@", [NSThread currentThread]);
+        [NSThread sleepForTimeInterval:0.1];
+        
+    }];
+
+    operation1.completionBlock = ^{
+        // ...下载完图片后想做事情
+        NSLog(@"NSBlockOperation------下载图片完毕-1--%@", [NSThread currentThread]);
+};
+
+NSInvocationOperation
+    // 1.创建操作对象, 封装要执行的任务
+    NSInvocationOperation *operation = [[NSInvocationOperation alloc] initWithTarget:self selector:@selector(download) object:nil];
+    
+    // 2.执行操作(默认情况下, 如果操作没有放到队列queue中, 都是同步执行)
+    [operation start];
+
+8.	 线程间通信
+dispatch_async(
+dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+   // 执行耗时的异步操作...比如下载图片
+   dispatch_async(dispatch_get_main_queue(), ^{
+       // 回到主线程，执行UI刷新操作
+   });
+});
+
+
+9.	自定义一个NSOperation的子类HMDownloadOperation通过传入参数下载地址URL下载图片，完成以后通过协议代理，在主线程将图片返回给代理
+头文件
+#import <Foundation/Foundation.h>
+
+@class HMDownloadOperation;
+
+@protocol HMDownloadOperationDelegate <NSObject>
+@optional
+- (void)downloadOperation:(HMDownloadOperation *)operation didFinishDownload:(UIImage *)image;
+@end
+
+@interface HMDownloadOperation : NSOperation
+@property (nonatomic, copy) NSString *url;
+@property (nonatomic, strong) NSIndexPath *indexPath;
+@property (nonatomic, weak) id<HMDownloadOperationDelegate> delegate;
+@end
+
+
+实现文件
+#import "HMDownloadOperation.h"
+
+@implementation HMDownloadOperation
+
+/**
+ *  在main方法中实现具体操作
+ */
+- (void)main
+{
+    @autoreleasepool {
+        
+        NSURL *downloadUrl = [NSURL URLWithString:self.url];
+        NSData *data = [NSData dataWithContentsOfURL:downloadUrl]; // 这行会比较耗时
+        UIImage *image = [UIImage imageWithData:data];
+
+        if ([self.delegate respondsToSelector:@selector(downloadOperation:didFinishDownload:)]) {
+            dispatch_async(dispatch_get_main_queue(), ^{ // 回到主线程, 传递图片数据给代理对象
+                [self.delegate downloadOperation:self didFinishDownload:image];
+            });
+        }
+    }
+}
+@end
+
+
+Q1.9 NSOperation实现卖票防止冲突
+
+暂停队列中的任务
+[self.queue setSuspended:YES];
+
+恢复队列中的任务
+[self.queue setSuspended:NO];
+
+
+动画2
+Q2.1 CABasicAnimation的代码例子
+Q2.2 CAKeyFrameAnimation代码的例子
+Q2.3 CAGroupAnimation代码的例子
+Q2.4 CATransition动画的例子
+Q2.5 UIView动画
+Q2.6 组合动画的例子 极客学院对应得代码
+Q2.7 圆弧形的动画设置
+Q2.8 
+Block 3
+Q3.1 无参数无返回值，无参数有返回值，有参数无返回值，有参数有返回值的4种情况demo
+Q3.2 数组的排序，compareBlock是一个参数，通过block可以在后面方便的调用
+Q3.3 block作为属性，使用typedef 关键字对block属性相关部分做处理
+Q3.4  
+网络 4
+Q4.1 HTTP Get的方法
+   NSURL *url = [NSURL URLWithString:@"http://192.168.3.47:8888/09.zip"];
+    // 默认就是GET请求
+    NSURLRequest *request = [NSURLRequest requestWithURL:url];
+    [NSURLConnection connectionWithRequest:request delegate:self];
+
+
+Q4.2 HTTP Post上传文本的代码
+Q4.3 HTTP Post表单
+Q4.4 HTTP 获取文件信息
+内存管理 5
+Q5.1 循环引用
+Q5.2 MRC写viewDidLoad中增加一个UIImageView
+Q5.3 ARC MRC混编
+
+Git 6
+Q6.1 git 从远程仓库克隆项目
+Q6.2 git提交到远程仓库
+Q6.3 git解决冲突
+
+git hub官方指引
+https://guides.github.com/activities/hello-world/
+
+SVN 7
+Q7.1 svn从远程仓库克隆项目
+Q7.2 svn提交到远程仓库
+Q7.3 svn冲突如何解决
+C语言 8
+Q8.1 C语言指针
+Q8.2 C语言函数
+Bug和调试 9
+
+Swift 10
+
+FMDB 11
+FMDB基本操作
+Q11.1 FMDB建立文件，建表
+Q11.2 增删改查方法
+Q11.3 FMDatabaseQueue的用法
+CoreData 12
+CoreData基本操作，多线程如何处理
+绘图 13
+倒影，水印，涂鸦绘图，模糊处理，滤镜图层
+架构的问题 14
+MVVM
+ReactiveCoco
+
+项目框架的问题 15
+寻找常用的项目框架
+
+CoreText排版 16
+图文混排
+Cocoapods 技巧 17
+Q17.1 cocoapods管理第三方的常见步骤  
+Q17.2 cocoapods 私有库
+Q17.3 指定第三方库的分支
+Q17.4 
+
+UIKit的继承关系 18
+大概的继承关系
+UIResponder UIController UIView
+
+代码规范
+https://github.com/doejo/Objective-C-Style-Guide
+
+https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/CodingGuidelines/CodingGuidelines.html
+
+方法如果是执行动作应该采用动次，尽量避免无意义的do和does等助词
+
+面试题 99
+给定2个大小分别为n,m的整数集合，分别存放在两个数组中int A[n], b[m],输出2个集合的交集
+
+
+对范围是0到n^2-1的n个整数进行排序。详细描述算法，在优先优化时间复杂度的前提下，对空间复杂度进行优化
+ 
+
+ 排列组合问题
+
+@property的本质
+ivar,getter,setter
+
+1.	@synthesize和@dynamic分别有什么作用？
+
+1）@property有两个对应的词，一个是@synthesize，一个是@dynamic。如果@synthesize和@dynamic都没写，那么默认的就是@syntheszie var = _var;
+
+2）@synthesize的语义是如果你没有手动实现setter方法和getter方法，那么编译器会自动为你加上这两个方法。
+
+3）@dynamic告诉编译器：属性的setter与getter方法由用户自己实现，不自动生成。（当然对于readonly的属性只需提供getter即可）。假如一个属性被声明为@dynamic var，然后你没有提供@setter方法和@getter方法，编译的时候没问题，但是当程序运行到instance.var = someVar，由于缺setter方法会导致程序崩溃；或者当运行到 someVar = var时，由于缺getter方法同样会导致崩溃。编译时没问题，运行时才执行相应的方法，这就是所谓的动态绑定。
+
+
+2.	 ARC下，不显式指定任何属性关键字时，默认的关键字都有哪些？
+
+对应基本数据类型默认关键字是
+atomic,readwrite,assign
+
+对于普通的OC对象
+atomic,readwrite,strong
+
+
+
+3.	在有了自动合成属性实例变量之后，@synthesize还有哪些使用场景？
+
+回答这个问题前，我们要搞清楚一个问题，什么情况下不会autosynthesis（自动合成）？
+
+同时重写了setter和getter时
+重写了只读属性的getter时
+使用了@dynamic时
+在 @protocol 中定义的所有属性
+在 category 中定义的所有属性
+重载的属性
+当你在子类中重载了父类中的属性，你必须 使用@synthesize来手动合成ivar。
+
+除了后三条，对其他几个我们可以总结出一个规律：当你想手动管理@property的所有内容时，你就会尝试通过实现@property的所有“存取方法”（the accessor methods）或者使用@dynamic来达到这个目的，这时编译器就会认为你打算手动管理@property，于是编译器就禁用了autosynthesis（自动合成）。
+
+因为有了autosynthesis（自动合成），大部分开发者已经习惯不去手动定义ivar，而是依赖于autosynthesis（自动合成），但是一旦你需要使用ivar，而autosynthesis（自动合成）又失效了，如果不去手动定义ivar，那么你就得借助@synthesize来手动合成ivar。
+
+其实，@synthesize语法还有一个应用场景，但是不太建议大家使用：
+
+可以在类的实现代码里通过@synthesize语法来指定实例变量的名字:
+
+@implementation CYLPerson 
+@synthesize firstName = _myFirstName; 
+@synthesize lastName = _myLastName; 
+@end
+
+上述语法会将生成的实例变量命名为_myFirstName与_myLastName，而不再使用默认的名字。一般情况下无须修改默认的实例变量名，但是如果你不喜欢以下划线来命名实例变量，那么可以用这个办法将其改为自己想要的名字。笔者还是推荐使用默认的命名案，因为如果所有人都坚持这套方案，那么写出来的代码大家都能看得懂。
+
+举例说明：应用场景：
+
+当你同时重写了setter和getter时，系统就不会生成ivar（实例变量/成员变量）。这时候有两种选择：
+
+要么如第14行：手动创建ivar
+要么如第17行：使用@synthesize foo = _foo; ，关联@property与ivar。
+
+
+4.	static 关键字的作用
+
+1.函数体内 static 变量的作用范围为该函数体，不同于 auto 变量，该变量的内存只被分配一次，
+
+因此其值在下次调用时仍维持上次的值；
+
+2.在模块内的 static 全局变量可以被模块内所用函数访问，但不能被模块外其它函数访问；
+
+3.在模块内的 static 函数只可被这一模块内的其它函数调用，这个函数的使用范围被限制在声明 它的模块内；
+
+4.在类中的 static 成员变量属于整个类所拥有，对类的所有对象只有一份拷贝；
+
+5.在类中的 static 成员函数属于整个类所拥有，这个函数不接收 this 指针，因而只能访问类的static 成员变量。
+
+5.	iOS 中的事件的传递:响应链
+
+简要说一下:
+
+事件沿着一个指定的路径传递直到它遇见可以处理它的对象。 首先一个UIApplication 对象从队列顶部获取一个事件并分发(dispatches)它以便处理。 通常，它把事件传递给应用程序的关键窗口对象，该对象把事件传递给一个初始对象来处理。 初始对象取决于事件的类型。
+
+触摸事件。 对于触摸事件，窗口对象首先尝试把事件传递给触摸发生的视图。那个视图被称为hit-test(点击测试)视图。 寻找hit-test视图的过程被称为hit-testing, 参见 “Hit-Testing Returns the View Where a Touch Occurred.”
+
+运动和远程控制事件。 对于这些事件，窗口对象把shaking-motion(摇晃运动)或远程控制事件传递给第一响应者来处理。第一响应者请参见 “The Responder Chain Is Made Up of Responder Objects.”
+
+iOS 使用hit-testing来找到事件发生的视图。 Hit-testing包括检查触摸事件是否发生在任何相关视图对象的范围内， 如果是，则递归地检查所有视图的子视图。在视图层次中的最底层视图，如果它包含了触摸点，那么它就是hit-test视图。等 iOS决定了hit-test视图之后，它把触摸事件传递给该视图以便处理。
+
+参考链接：http://yishuiliunian.gitbooks.io/implementate-tableview-to-understand-ios/content/uikit/132event-chains.html
+
+
+6.	类别和类扩展的区别。
+
+答：category和extensions的不同在于 后者可以添加属性。另外后者添加的方法是必须要实现的。
+
+extensions可以认为是一个私有的Category。
+
+
+
+7.	谈谈对Block 的理解?并写出一个使用Block执行UIVew动画?
+
+答：Block是可以获取其他函数局部变量的匿名函数，其不但方便开发，并且可以大幅提高应用的执行效率(多核心CPU可直接处理Block指令)
+
+
+[UIView?transitionWithView:self.view
+duration:0.2
+options:UIViewAnimationOptionTransitionFlipFromLeft
+animations:^{?[[blueViewController?view]?removeFromSuperview];?[[self?view]?insertSubview:yellowViewController.view?atIndex:0];?}
+completion:NULL];
+8.	写出上面代码的Block的定义。
+
+答：
+
+typedef void(^animations)(void);
+typedef void(^completion)(BOOL?finished);
+9.	试着使用+ beginAnimations:context:以及上述Block的定义，写出一个可以完成
+
+1
++?(void)transitionWithView:(UIView?*)view?duration:(NSTimeInterval)duration?options:(UIViewAnimationOptions)options?animations:(void?(^)(void))animations?completion:(void?(^)(BOOL?finished))completion?NS_AVAILABLE_IOS(4_0);
+操作的函数执行部分
+
+答案：无
+
+
+10.	Object-C有私有方法吗？私有变量呢？
+
+答: objective-c – 类里面的方法只有两种, 静态方法和实例方法. 这似乎就不是完整的面向对象了,按照OO的原则就是一个对象只暴露有用的东西. 如果没有了私有方法的话, 对于一些小范围的代码重用就不那么顺手了. 在类里面声名一个私有方法
+
+@interface?Controller:NSObject{NSString *something;}
++(void)thisIsAStaticMethod;
+–(void)thisIsAnInstanceMethod;
+@end
+@interface?Controller(private)-
+-(void)thisIsAPrivateMethod;
+@end
+@private可以用来修饰私有变量
+
+在Objective‐C中，所有实例变量默认都是私有的，所有实例方法默认都是公有的
+
+
+11.	关键字const有什么含意？修饰类呢?static的作用,用于类呢?还有extern c的作用
+
+答：
+
+const 意味着"只读"，下面的声明都是什么意思？
+
+const int a;
+int const a;
+const int *a;
+int * const a;
+int const * a const;
+前两个的作用是一样，a是一个常整型数。
+
+第三个意味着a是一个指向常整型数的指针（也就是，整型数是不可修改的，但指针可以）。
+
+第四个意思a是一个指向整型数的常指针（也就是说，指针指向的整型数是可以修改的，但指针是不可修改的）。
+
+最后一个意味着a是一个指向常整型数的常指针（也就是说，指针指向的整型数是不可修改的，同时指针也是不可修改的）。
+
+结论：
+
+关键字const的作用是为给读你代码的人传达非常有用的信息，实际上，声明一个参数为常量是为了告诉了用户这个参数的应用目的。
+
+如果你曾花很多时间清理其它人留下的垃圾，你就会很快学会感谢这点多余的信息。（当然，懂得用const的程序员很少会留下的垃圾让别人来清理的） ?通过给优化器一些附加的信息，使用关键字const也许能产生更紧凑的代码。合理地使用关键字const可以使编译器很自然地保护那些不希望被改变的参数，防止其被无意的代码修改。简而言之，这样可以减少bug的出现。
+
+1).欲阻止一个变量被改变，可以使用 const 关键字。在定义该 const 变量时，通常需要对它进行初始化，因为以后就没有机会再去改变它了；
+
+2).对指针来说，可以指定指针本身为 const，也可以指定指针所指的数据为 const，或二者同时指定为 const；
+
+3).在一个函数声明中，const 可以修饰形参，表明它是一个输入参数，在函数内部不能改变其值；
+
+4).对于类的成员函数，若指定其为 const 类型，则表明其是一个常函数，不能修改类的成员变量；
+
+5).对于类的成员函数，有时候必须指定其返回值为 const 类型，以使得其返回值不为“左值”。
+
+
+12.	什么是沙盒模型？哪些操作是属于私有api范畴?
+
+答：某个iphone工程进行文件操作有此工程对应的指定的位置，不能逾越。
+
+iphone沙箱模型的有四个文件夹documents，tmp，app，Library，永久数据存储一般放documents文件夹，得到模拟器的路径的可使用NSHomeDirectory()方法。Nsuserdefaults保存的文件在tmp文件夹里。
+
+
+13.	简述视图控件器的生命周期。
+答： loadView 尽管不直接调用该方法，如多手动创建自己的视图，那么应该覆盖这个方法并将它们赋值给试图控制器的 view 属性。
+viewDidLoad 只有在视图控制器将其视图载入到内存之后才调用该方法，这是执行任何其他初始化操作的入口。
+viewDidUnload 当试图控制器从内存释放自己的方法的时候调用，用于清楚那些可能已经在试图控制器中创建的对象。
+viewVillAppear 当试图将要添加到窗口中并且还不可见的时候或者上层视图移出图层后本视图变成顶级视图时调用该方法，用于执行诸如改变视图方向等的操作。实现该方法时确保调用 [super viewWillAppear:
+viewDidAppear 当视图添加到窗口中以后或者上层视图移出图层后本视图变成顶级视图时调用，用于放置那些需要在视图显示后执行的代码。确保调用 [super viewDidAppear：] 。
+
+
+14.	iPhone OS主要提供了几种播放音频的方法？
+
+答： SystemSound Services
+
+AVAudioPlayer 类
+
+Audio Queue Services
+
+OpenAL
+
+15.	使用AVAudioPlayer类调用哪个框架、使用步骤？
+
+答： AVFoundation.framework
+
+步骤：配置 AVAudioPlayer 对象；
+
+实现 AVAudioPlayer 类的委托方法；
+
+控制 AVAudioPlayer 类的对象；
+
+监控音量水平；
+
+回放进度和拖拽播放。
+
+16.	有哪几种手势通知方法、写清楚方法名？
+
+答：
+
+-(void)touchesBegan:(NSSet*)touchedwithEvent:(UIEvent*)event;
+
+-(void)touchesMoved:(NSSet*)touched withEvent:(UIEvent*)event;
+
+-(void)touchesEnded:(NSSet*)touchedwithEvent:(UIEvent*)event;
+
+-(void)touchesCanceled:(NSSet*)touchedwithEvent:(UIEvent*)event;
+
+17.	CFSocket使用有哪几个步骤。
+
+答：创建 Socket 的上下文；创建 Socket ；配置要访问的服务器信息；封装服务器信息；连接服务器；
+
+18.	Core Foundation中提供了哪几种操作Socket的方法？
+
+答： CFNetwork 、 CFSocket 和 BSD Socket 。
+
+19.	解析XML文件有哪几种方式？
+
+答：以 DOM 方式解析 XML 文件；以 SAX 方式解析 XML 文件；
+
+20.	UIView与CLayer有什么区别？
+
+答：
+
+1).UIView 是 iOS 系统中界面元素的基础，所有的界面元素都是继承自它。它本身完全是由 CoreAnimation 来实现的。它真正的绘图部分，是由一个 CALayer 类来管理。 UIView 本身更像是一个 CALayer 的管理器，访问它的跟绘图和跟坐标有关的属性。
+
+2).UIView 有个重要属性 layer ，可以返回它的主 CALayer 实例。
+
+3).UIView 的 CALayer 类似 UIView 的子 View 树形结构，也可以向它的 layer 上添加子layer ，来完成某些特殊的表示。即 CALayer 层是可以嵌套的。
+
+4).UIView 的 layer 树形在系统内部，被维护着三份 copy 。分别是逻辑树，这里是代码可以操纵的；动画树，是一个中间层，系统就在这一层上更改属性，进行各种渲染操作；显示树，其内容就是当前正被显示在屏幕上得内容。
+
+5).动画的运作：对 UIView 的 subLayer （非主 Layer ）属性进行更改，系统将自动进行动画生成，动画持续时间的缺省值似乎是 0.5 秒。
+
+6).坐标系统： CALayer 的坐标系统比 UIView 多了一个 anchorPoint 属性，使用CGPoint 结构表示，值域是 0~1 ，是个比例值。这个点是各种图形变换的坐标原点，同时会更改 layer 的 position 的位置，它的缺省值是 {0.5,0.5} ，即在 layer 的中央。
+
+7).渲染：当更新层，改变不能立即显示在屏幕上。当所有的层都准备好时，可以调用setNeedsDisplay 方法来重绘显示。
+
+8).变换：要在一个层中添加一个 3D 或仿射变换，可以分别设置层的 transform 或affineTransform 属性。
+
+9).变形： Quartz Core 的渲染能力，使二维图像可以被自由操纵，就好像是三维的。图像可以在一个三维坐标系中以任意角度被旋转，缩放和倾斜。 CATransform3D 的一套方法提供了一些魔术般的变换效果。
+
+21.	Quatrz 2D的绘图功能的三个核心概念是什么并简述其作用。
+
+答：上下文：主要用于描述图形写入哪里；
+
+路径：是在图层上绘制的内容；
+
+状态：用于保存配置变换的值、填充和轮廓， alpha 值等。
+
+22.	什么情况使用 weak 关键字，相比 assign 有什么不同？
+
+23.	怎么用 copy 关键字？
+
+24.	这个写法会出什么问题： @property (copy) NSMutableArray *array;
+
+25.	如何让自己的类用 copy 修饰符？如何重写带 copy 关键字的 setter？
+需声明该类遵从 NSCopying 协议
+实现 NSCopying 协议。该协议只有一个方法:
+26.	@property 的本质是什么？ivar、getter、setter 是如何生成并添加到这个类中的
+
+27.	@protocol 和 category 中如何使用 @property
+
+28.	runtime 如何实现 weak 属性
+
+29.	@property中有哪些属性关键字？/ @property 后面可以有哪些修饰符？
+
+30.	weak属性需要在dealloc中置nil么？
+
+31.	@synthesize和@dynamic分别有什么作用？
+
+32.	ARC下，不显式指定任何属性关键字时，默认的关键字都有哪些？
+
+33.	用@property声明的NSString（或NSArray，NSDictionary）经常使用copy关键字，为什么？如果改用strong关键字，可能造成什么问题？
+
+34.	对非集合类对象的copy操作
+
+
+35.	集合类对象的copy与mutableCopy
+集合类对象是指 NSArray、NSDictionary、NSSet ... 之类的对象。下面先看集合类immutable对象使用 copy 和 mutableCopy 的一个例子：
+
+NSArray *array = @[@[@"a", @"b"], @[@"c", @"d"]];
+NSArray *copyArray = [array copy];
+NSMutableArray *mCopyArray = [array mutableCopy];
+查看内容，可以看到 copyArray 和 array 的地址是一样的，而 mCopyArray 和 array 的地址是不同的。说明 copy 操作进行了指针拷贝，mutableCopy 进行了内容拷贝。但需要强调的是：此处的内容拷贝，仅仅是拷贝 array 这个对象，array 集合内部的元素仍然是指针拷贝。这和上面的非集合 immutable 对象的拷贝还是挺相似的，那么mutable对象的拷贝会不会类似呢？我们继续往下，看 mutable 对象拷贝的例子：
+
+NSMutableArray *array = [NSMutableArray arrayWithObjects:[NSMutableString stringWithString:@"a"],@"b",@"c",nil];
+NSArray *copyArray = [array copy];
+NSMutableArray *mCopyArray = [array mutableCopy];
+查看内存，如我们所料，copyArray、mCopyArray和 array 的内存地址都不一样，说明 copyArray、mCopyArray 都对 array 进行了内容拷贝。同样，我们可以得出结论：
+
+在集合类对象中，对 immutable 对象进行 copy，是指针复制， mutableCopy 是内容复制；对 mutable 对象进行 copy 和 mutableCopy 都是内容复制。但是：集合对象的内容复制仅限于对象本身，对象元素仍然是指针复制。用代码简单表示如下：
+
+[immutableObject copy] // 浅复制
+[immutableObject mutableCopy] //单层深复制
+[mutableObject copy] //单层深复制
+[mutableObject mutableCopy] //单层深复制
+这个代码结论和非集合类的非常相似。
+36.	@synthesize合成实例变量的规则是什么？假如property名为foo，存在一个名为_foo的实例变量，那么还会自动合成新变量么？
+
+37.	在有了自动合成属性实例变量之后，@synthesize还有哪些使用场景？
+回答这个问题前，我们要搞清楚一个问题，什么情况下不会autosynthesis（自动合成）？
+
+同时重写了 setter 和 getter 时
+重写了只读属性的 getter 时
+使用了 @dynamic 时
+在 @protocol 中定义的所有属性
+在 category 中定义的所有属性
+重载的属性
+
+当你在子类中重载了父类中的属性，你必须 使用 @synthesize 来手动合成ivar。
+
+除了后三条，对其他几个我们可以总结出一个规律：当你想手动管理 @property 的所有内容时，你就会尝试通过实现 @property 的所有“存取方法”（the accessor methods）或者使用 @dynamic 来达到这个目的，这时编译器就会认为你打算手动管理 @property，于是编译器就禁用了 autosynthesis（自动合成）。
+
+因为有了 autosynthesis（自动合成），大部分开发者已经习惯不去手动定义ivar，而是依赖于 autosynthesis（自动合成），但是一旦你需要使用ivar，而 autosynthesis（自动合成）又失效了，如果不去手动定义ivar，那么你就得借助 @synthesize 来手动合成 ivar。
+
+
+38.	objc中向一个nil对象发送消息将会发生什么？
+在 Objective-C 中向 nil 发送消息是完全有效的——只是在运行时不会有任何作用:
+
+如果一个方法返回值是一个对象，那么发送给nil的消息将返回0(nil)。例如：
+
+Person * motherInlaw = [[aPerson spouse] mother];
+如果 spouse 对象为 nil，那么发送给 nil 的消息 mother 也将返回 nil。
+
+如果方法返回值为指针类型，其指针大小为小于或者等于sizeof(void*)，float，double，long double 或者 long long 的整型标量，发送给 nil 的消息将返回0。
+如果方法返回值为结构体,发送给 nil 的消息将返回0。结构体中各个字段的值将都是0。
+如果方法的返回值不是上述提到的几种情况，那么发送给 nil 的消息的返回值将是未定义的。
+具体原因如下：
+
+objc是动态语言，每个方法在运行时会被动态转为消息发送，即：objc_msgSend(receiver, selector)。
+
+39.	objc中向一个对象发送消息[obj foo]和objc_msgSend()函数之间有什么关系？
+具体原因同上题：该方法编译之后就是objc_msgSend()函数调用.
+40.	什么时候会报unrecognized selector的异常？
+当调用该对象上某个方法,而该对象上没有实现这个方法的时候， 可以通过“消息转发”进行解决。
+41.	一个objc对象如何进行内存布局？（考虑有父类的情况）
+所有父类的成员变量和自己的成员变量都会存放在该对象所对应的存储空间中.
+每一个对象内部都有一个isa指针,指向他的类对象,类对象中存放着本对象的
+
+对象方法列表（对象能够接收的消息列表，保存在它所对应的类对象中）
+成员变量的列表,
+属性列表,
+它内部也有一个isa指针指向元对象(meta class),元对象内部存放的是类方法列表,类对象内部还有一个superclass的指针,指向他的父类对象。
+
+每个 Objective-C 对象都有相同的结构，如下图所示：
+ 
+ 
+
+翻译过来就是
+
+Objective-C 对象的结构图
+ISA指针
+根类的实例变量
+倒数第二层父类的实例变量
+...
+父类的实例变量
+类的实例变量
+根对象就是NSObject，它的superclass指针指向nil
+
+类对象既然称为对象，那它也是一个实例。类对象中也有一个isa指针指向它的元类(meta class)，即类对象是元类的实例。元类内部存放的是类方法列表，根元类的isa指针指向自己，superclass指针指向NSObject类。
+42.	一个objc对象的isa的指针指向什么？有什么作用？
+指向他的类对象,从而可以找到对象上的方法
+43.	下面的代码输出什么？
+
+  @implementation Son : Father
+  - (id)init
+  {
+      self = [super init];
+      if (self) {
+          NSLog(@"%@", NSStringFromClass([self class]));
+          NSLog(@"%@", NSStringFromClass([super class]));
+      }
+      return self;
+  }
+  @end
+
+
+
+都输出 Son
+
+NSStringFromClass([self class]) = Son
+NSStringFromClass([super class]) = Son
+这个题目主要是考察关于 Objective-C 中对 self 和 super 的理解。
+
+我们都知道：self 是类的隐藏参数，指向当前调用方法的这个类的实例。那 super 呢？
+
+很多人会想当然的认为“ super 和 self 类似，应该是指向父类的指针吧！”。这是很普遍的一个误区。其实 super 是一个 Magic Keyword， 它本质是一个编译器标示符，和 self 是指向的同一个消息接受者！他们两个的不同点在于：super 会告诉编译器，调用 class 这个方法时，要去父类的方法，而不是本类里的。
+
+上面的例子不管调用[self class]还是[super class]，接受消息的对象都是当前 Son ＊xxx 这个对象。
+
+当使用 self 调用方法时，会从当前类的方法列表中开始找，如果没有，就从父类中再找；而当使用 super 时，则从父类的方法列表中开始找。然后调用父类的这个方法。
+
+这也就是为什么说“不推荐在 init 方法中使用点语法”，如果想访问实例变量 iVar 应该使用下划线（ _iVar ），而非点语法（ self.iVar ）。
+
+点语法（ self.iVar ）的坏处就是子类有可能覆写 setter 。假设 Person 有一个子类叫 ChenPerson，这个子类专门表示那些姓“陈”的人。该子类可能会覆写 lastName 属性所对应的设置方法：
+44.	 runtime如何通过selector找到对应的IMP地址？（分别考虑类方法和实例方法）
+
+每一个类对象中都一个方法列表,方法列表中记录着方法的名称,方法实现,以及参数类型,其实selector本质就是方法名称,通过这个方法名称就可以在方法列表中找到对应的方法实现.
+
+45.	使用runtime Associate方法关联的对象，需要在主对象dealloc的时候释放么？
+
+在ARC MRC下不需要。
+
+
+46.	_objc_msgForward 函数是做什么的，直接调用它将会发生什么？
+_objc_msgForward是 IMP 类型，用于消息转发的：当向一个对象发送一条消息，但它并没有实现的时候，_objc_msgForward会尝试做消息转发。
+47.	runtime如何实现weak变量的自动置nil？
+runtime 对注册的类， 会进行布局，对于 weak 对象会放入一个 hash 表中。 用 weak 指向的对象内存地址作为 key，当此对象的引用计数为0的时候会 dealloc，假如 weak 指向的对象内存地址是a，那么就会以a为键， 在这个 weak 表中搜索，找到所有以a为键的 weak 对象，从而设置为 nil。
+在上篇中的《objc中向一个对象发送消息[obj foo]和objc_msgSend()函数之间有什么关系？》曾提到objc_msgSend在“消息传递”中的作用。在“消息传递”过程中，objc_msgSend的动作比较清晰：首先在 Class 中的缓存查找 IMP （没缓存则初始化缓存），如果没找到，则向父类的 Class 查找。如果一直查找到根类仍旧没有实现，则用_objc_msgForward函数指针代替 IMP 。最后，执行这个 IMP 。
+
+Objective-C运行时是开源的，所以我们可以看到它的实现。打开 Apple Open Source 里Mac代码里的obj包 下载一个最新版本，找到 objc-runtime-new.mm，进入之后搜索_objc_msgForward。
+
+48.	能否向编译后得到的类中增加实例变量？能否向运行时创建的类中添加实例变量？为什么？
+不能向编译后得到的类中增加实例变量；
+能向运行时创建的类中添加实例变量；
+解释下：
+
+因为编译后的类已经注册在 runtime 中，类结构体中的 objc_ivar_list 实例变量的链表 和 instance_size 实例变量的内存大小已经确定，同时runtime 会调用 class_setIvarLayout 或 class_setWeakIvarLayout 来处理 strong weak 引用。所以不能向存在的类中添加实例变量；
+
+运行时创建的类是可以添加实例变量，调用 class_addIvar 函数。但是得在调用 objc_allocateClassPair 之后，objc_registerClassPair 之前，原因同上。
+49.	runloop和线程有什么关系？
+总的说来，Run loop，正如其名，loop表示某种循环，和run放在一起就表示一直在运行着的循环。实际上，run loop和线程是紧密相连的，可以这样说run loop是为了线程而生，没有线程，它就没有存在的必要。Run loops是线程的基础架构部分， Cocoa 和 CoreFundation 都提供了 run loop 对象方便配置和管理线程的 run loop （以下都以 Cocoa 为例）。每个线程，包括程序的主线程（ main thread ）都有与之相应的 run loop 对象。
+
+runloop 和线程的关系：
+
+主线程的run loop默认是启动的。
+
+iOS的应用程序里面，程序启动后会有一个如下的main()函数
+
+int main(int argc, char * argv[]) {
+@autoreleasepool {
+    return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+}
+}
+重点是UIApplicationMain()函数，这个方法会为main thread设置一个NSRunLoop对象，这就解释了：为什么我们的应用可以在无人操作的时候休息，需要让它干活的时候又能立马响应。
+
+对其它线程来说，run loop默认是没有启动的，如果你需要更多的线程交互则可以手动配置和启动，如果线程只是去执行一个长时间的已确定的任务则不需要。
+
+在任何一个 Cocoa 程序的线程中，都可以通过以下代码来获取到当前线程的 run loop 。
+
+NSRunLoop *runloop = [NSRunLoop currentRunLoop];
+50.	runloop的mode作用是什么？
+model 主要是用来指定事件在运行循环中的优先级的，分为：
+
+NSDefaultRunLoopMode（kCFRunLoopDefaultMode）：默认，空闲状态
+UITrackingRunLoopMode：ScrollView滑动时
+UIInitializationRunLoopMode：启动时
+NSRunLoopCommonModes（kCFRunLoopCommonModes）：Mode集合
+苹果公开提供的 Mode 有两个：
+
+NSDefaultRunLoopMode（kCFRunLoopDefaultMode）
+NSRunLoopCommonModes（kCFRunLoopCommonModes）
+51.	以+ scheduledTimerWithTimeInterval...的方式触发的timer，在滑动页面上的列表时，timer会暂定回调，为什么？如何解决？
+
+RunLoop只能运行在一种mode下，如果要换mode，当前的loop也需要停下重启成新的。利用这个机制，ScrollView滚动过程中NSDefaultRunLoopMode（kCFRunLoopDefaultMode）的mode会切换到UITrackingRunLoopMode来保证ScrollView的流畅滑动：只能在NSDefaultRunLoopMode模式下处理的事件会影响ScrollView的滑动。
+
+如果我们把一个NSTimer对象以NSDefaultRunLoopMode（kCFRunLoopDefaultMode）添加到主运行循环中的时候, ScrollView滚动过程中会因为mode的切换，而导致NSTimer将不再被调度。
+
+同时因为mode还是可定制的，所以：
+
+Timer计时会被scrollView的滑动影响的问题可以通过将timer添加到NSRunLoopCommonModes（kCFRunLoopCommonModes）来解决。代码如下：
+
+// 
+// http://weibo.com/luohanchenyilong/ (微博@iOS程序犭袁)
+// https://github.com/ChenYilong
+
+//将timer添加到NSDefaultRunLoopMode中
+[NSTimer scheduledTimerWithTimeInterval:1.0
+     target:self
+     selector:@selector(timerTick:)
+     userInfo:nil
+     repeats:YES];
+//然后再添加到NSRunLoopCommonModes里
+NSTimer *timer = [NSTimer timerWithTimeInterval:1.0
+     target:self
+     selector:@selector(timerTick:)
+     userInfo:nil
+     repeats:YES];
+[[NSRunLoop currentRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+52.	猜想runloop内部是如何实现的？
+    initialize();
+    do {
+        var message = get_next_message();
+        process_message(message);
+    } while (message != quit);
+}
+53.	 objc使用什么机制管理对象内存？
+54.	ARC通过什么方式帮助开发者管理内存？
+通过 retainCount 的机制来决定对象是否需要释放。 每次 runloop 的时候，都会检查对象的 retainCount，如果retainCount 为 0，说明该对象没有地方需要继续使用了，可以释放掉了
+55.	不手动指定autoreleasepool的前提下，一个autorealese对象在什么时刻释放？（比如在一个vc的viewDidLoad中创建）
+分两种情况：手动干预释放时机、系统自动去释放。
+
+手动干预释放时机--指定autoreleasepool 就是所谓的：当前作用域大括号结束时释放。
+系统自动去释放--不手动指定autoreleasepool
+
+Autorelease对象出了作用域之后，会被添加到最近一次创建的自动释放池中，并会在当前的 runloop 迭代结束时释放。
+
+释放的时机总结起来，可以用下图来表示：
+56.	BAD_ACCESS在什么情况下出现？
+访问了野指针，比如对一个已经释放的对象执行了release、访问已经释放对象的成员变量或者发消息。 死循环
+57.	苹果是如何实现autoreleasepool的？
+autoreleasepool 以一个队列数组的形式实现,主要通过下列三个函数完成.
+
+objc_autoreleasepoolPush
+objc_autoreleasepoolPop
+objc_autorelease
+看函数名就可以知道，对 autorelease 分别执行 push，和 pop 操作。销毁对象时执行release操作。
+
+举例说明：我们都知道用类方法创建的对象都是 Autorelease 的，那么一旦 Person 出了作用域，当在 Person 的 dealloc 方法中打上断点，我们就可以看到这样的调用堆栈信息
+58.	使用block时什么情况会发生引用循环，如何解决？
+id weak weakSelf = self; 或者 weak __typeof(&*self)weakSelf = self该方法可以设置宏
+id __block weakSelf = self;
+59.	在block内如何修改block外部变量？
+
+__block 修饰变量
+
+
+60.	使用系统的某些block api（如UIView的block版本写动画时），是否也考虑引用循环问题？
+系统的某些block api中，UIView的block版本写动画时不需要考虑，但也有一些api 需要考虑：
+
+所谓“引用循环”是指双向的强引用，所以那些“单向的强引用”（block 强引用 self ）没有问题，比如这些：
+
+[UIView animateWithDuration:duration animations:^{ [self.superview layoutIfNeeded]; }]; 
+[[NSOperationQueue mainQueue] addOperationWithBlock:^{ self.someProperty = xyz; }]; 
+[[NSNotificationCenter defaultCenter] addObserverForName:@"someNotification" 
+                                                  object:nil 
+                           queue:[NSOperationQueue mainQueue]
+                                              usingBlock:^(NSNotification * notification) {
+                                                    self.someProperty = xyz; }]; 
+这些情况不需要考虑“引用循环”。
+
+  __weak __typeof__(self) weakSelf = self;
+  _observer = [[NSNotificationCenter defaultCenter] addObserverForName:@"testKey"
+                                                                object:nil
+                                                                 queue:nil
+                                                            usingBlock:^(NSNotification *note) {
+      __typeof__(self) strongSelf = weakSelf;
+      [strongSelf dismissModalViewControllerAnimated:YES];
+  }];
+
+
+__weak __typeof__(self) weakSelf = self;
+dispatch_group_async(_operationsGroup, _operationsQueue, ^
+{
+__typeof__(self) strongSelf = weakSelf;
+[strongSelf doSomething];
+[strongSelf doSomethingElse];
+} );
+
+61.	GCD的队列（dispatch_queue_t）分哪两种类型？
+串行队列Serial Dispatch Queue
+并行队列Concurrent Dispatch Queue
+62.	如何用GCD同步若干个异步调用？（如根据若干个url异步加载多张图片，然后在都下载完成后合成一张整图）
+使用Dispatch Group追加block到Global Group Queue,这些block如果全部执行完毕，就会执行Main Dispatch Queue中的结束处理的block。
+
+dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+dispatch_group_t group = dispatch_group_create();
+dispatch_group_async(group, queue, ^{ /*加载图片1 */ });
+dispatch_group_async(group, queue, ^{ /*加载图片2 */ });
+dispatch_group_async(group, queue, ^{ /*加载图片3 */ }); 
+dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        // 合并图片
+});
+
+63.	 dispatch_barrier_async的作用是什么？
+在并行队列中，为了保持某些任务的顺序，需要等待一些任务完成后才能继续进行，使用 barrier 来等待之前任务完成，避免数据竞争等问题。 dispatch_barrier_async 函数会等待追加到Concurrent Dispatch Queue并行队列中的操作全部执行完之后，然后再执行 dispatch_barrier_async 函数追加的处理，等 dispatch_barrier_async 追加的处理执行结束之后，Concurrent Dispatch Queue才恢复之前的动作继续执行。
+
+打个比方：比如你们公司周末跟团旅游，高速休息站上，司机说：大家都去上厕所，速战速决，上完厕所就上高速。超大的公共厕所，大家同时去，程序猿很快就结束了，但程序媛就可能会慢一些，即使你第一个回来，司机也不会出发，司机要等待所有人都回来后，才能出发。 dispatch_barrier_async 函数追加的内容就如同 “上完厕所就上高速”这个动作。
+
+
+    dispatch_queue_t concurrentQueue = dispatch_queue_create("my.concurrent.queue", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-1");
+    });
+    dispatch_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-2");
+    });
+    dispatch_barrier_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-barrier");
+    });
+    dispatch_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-3");
+    });
+    dispatch_async(concurrentQueue, ^(){
+        NSLog(@"dispatch-4");
+    });
+
+
+（注意：使用 dispatch_barrier_async ，该函数只能搭配自定义并行队列 dispatch_queue_t 使用。不能使用： dispatch_get_global_queue ，否则 dispatch_barrier_async 的作用会和 dispatch_async 的作用一模一样。 ）
+
+64.	苹果为什么要废弃dispatch_get_current_queue？
+dispatch_get_current_queue容易造成死锁
+
+65.	以下代码运行结果如何？
+
+- (void)viewDidLoad
+{
+[super viewDidLoad];
+NSLog(@"1");
+dispatch_sync(dispatch_get_main_queue(), ^{
+    NSLog(@"2");
+});
+NSLog(@"3");
+}
+只输出：1 。发生主线程锁死。
+
+
+66.	addObserver:forKeyPath:options:context:各个参数的作用分别是什么，observer中需要实现哪个方法才能获得KVO回调？
+// 添加键值观察
+/*
+1 观察者，负责处理监听事件的对象
+2 观察的属性
+3 观察的选项
+4 上下文
+*/
+[self.person addObserver:self forKeyPath:@"name" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:@"Person Name"];
+
+// 所有的 kvo 监听到事件，都会调用此方法
+/*
+ 1. 观察的属性
+ 2. 观察的对象
+ 3. change 属性变化字典（新／旧）
+ 4. 上下文，与监听的时候传递的一致
+ */
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context;
+67.	如何手动触发一个value的KVO
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    _now = [NSDate date];
+    [self addObserver:self forKeyPath:@"now" options:NSKeyValueObservingOptionNew context:nil];
+    NSLog(@"1");
+    [self willChangeValueForKey:@"now"]; // “手动触发self.now的KVO”，必写。
+    NSLog(@"2");
+    [self didChangeValueForKey:@"now"]; // “手动触发self.now的KVO”，必写。
+    NSLog(@"4");
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context {
+    NSLog(@"3");
+}
+
+68.	若一个类有实例变量 NSString *_foo ，调用setValue:forKey:时，可以以foo还是 _foo 作为key？
+都可以。
+69.	 KVC的keyPath中的集合运算符如何使用？
+必须用在集合对象上或普通对象的集合属性上
+简单集合运算符有@avg， @count ， @max ， @min ，@sum，
+格式 @"@sum.age"或 @"集合属性.@max.age"
+70.	 KVC和KVO的keyPath一定是属性么？
+KVO支持实例变量
+
+71.	如何关闭默认的KVO的默认实现，并进入自定义的KVO实现？
+http://tech.glowing.com/cn/implement-kvo/
+72.	 apple用什么方式实现对一个对象的KVO？
+Apple 的文档对 KVO 实现的描述：
+
+Automatic key-value observing is implemented using a technique called isa-swizzling... When an observer is registered for an attribute of an object the isa pointer of the observed object is modified, pointing to an intermediate class rather than at the true class ...
+从Apple 的文档可以看出：Apple 并不希望过多暴露 KVO 的实现细节。不过，要是借助 runtime 提供的方法去深入挖掘，所有被掩盖的细节都会原形毕露：
+
+当你观察一个对象时，一个新的类会被动态创建。这个类继承自该对象的原本的类，并重写了被观察属性的 setter 方法。重写的 setter 方法会负责在调用原 setter 方法之前和之后，通知所有观察对象：值的更改。最后通过 isa 混写（isa-swizzling） 把这个对象的 isa 指针 ( isa 指针告诉 Runtime 系统这个对象的类是什么 ) 指向这个新创建的子类，对象就神奇的变成了新创建的子类的实例。我画了一张示意图，如下所示：
+
+ 
+73.	IBOutlet连出来的视图属性为什么可以被设置成weak?
+参考链接： Should IBOutlets be strong or weak under ARC?
+
+文章告诉我们：
+
+因为既然有外链那么视图在xib或者storyboard中肯定存在，视图已经对它有一个强引用了。
+不过这个回答漏了个重要知识，使用storyboard（xib不行）创建的vc，会有一个叫_topLevelObjectsToKeepAliveFromStoryboard的私有数组强引用所有top level的对象，所以这时即便outlet声明成weak也没关系
+74.	 IB中User Defined Runtime Attributes如何使用？
+它能够通过KVC的方式配置一些你在interface builder 中不能配置的属性。当你希望在IB中作尽可能多得事情，这个特性能够帮助你编写更加轻量级的viewcontroller
+75.	如何调试BAD_ACCESS错误
+重写object的respondsToSelector方法，现实出现EXEC_BAD_ACCESS前访问的最后一个object
+通过 Zombie  enter image description here
+
+设置全局断点快速定位问题代码所在行
+
+Xcode 7 已经集成了BAD_ACCESS捕获功能：Address Sanitizer。 用法如下：在配置中勾选✅Enable Address Sanitizer
+76.	lldb（gdb）常用的调试命令？
+breakpoint 设置断点定位到某一个函数
+n 断点指针下一步
+po打印对象
+
+
+iOSInterviewQuestions/01《招聘一个靠谱的iOS》面试题参考答案/《招聘一个靠谱的iOS》面试题参考答案（下）.md
+
+
+https://github.com/ChenYilong/iOSInterviewQuestions/blob/master/01%E3%80%8A%E6%8B%9B%E8%81%98%E4%B8%80%E4%B8%AA%E9%9D%A0%E8%B0%B1%E7%9A%84iOS%E3%80%8B%E9%9D%A2%E8%AF%95%E9%A2%98%E5%8F%82%E8%80%83%E7%AD%94%E6%A1%88/%E3%80%8A%E6%8B%9B%E8%81%98%E4%B8%80%E4%B8%AA%E9%9D%A0%E8%B0%B1%E7%9A%84iOS%E3%80%8B%E9%9D%A2%E8%AF%95%E9%A2%98%E5%8F%82%E8%80%83%E7%AD%94%E6%A1%88%EF%BC%88%E4%B8%8A%EF%BC%89.md#19-%E4%B8%80%E4%B8%AAobjc%E5%AF%B9%E8%B1%A1%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80%E8%80%83%E8%99%91%E6%9C%89%E7%88%B6%E7%B1%BB%E7%9A%84%E6%83%85%E5%86%B5
+
+
+https://github.com/ChenYilong/iOSInterviewQuestions/blob/master/01%E3%80%8A%E6%8B%9B%E8%81%98%E4%B8%80%E4%B8%AA%E9%9D%A0%E8%B0%B1%E7%9A%84iOS%E3%80%8B%E9%9D%A2%E8%AF%95%E9%A2%98%E5%8F%82%E8%80%83%E7%AD%94%E6%A1%88/%E3%80%8A%E6%8B%9B%E8%81%98%E4%B8%80%E4%B8%AA%E9%9D%A0%E8%B0%B1%E7%9A%84iOS%E3%80%8B%E9%9D%A2%E8%AF%95%E9%A2%98%E5%8F%82%E8%80%83%E7%AD%94%E6%A1%88%EF%BC%88%E4%B8%8B%EF%BC%89.md
+
+
+
+
+http://www.cocoachina.com/ios/20151106/14069.html
+
+http://www.cocoachina.com/ios/20151120/14319.html	
+
+
+http://www.cocoachina.com/programmer/20160210/14844.html
+
+
+http://www.cocoachina.com/programmer/20160219/15331.html
+
+
+http://www.cocoachina.com/ios/20160323/15770.html
+
+
+文件操作
+
+Cache文件夹并写入数据
+    NSString *caches = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject];
+    NSString *filepath = [caches stringByAppendingPathComponent:@"video.zip"];
+    [self.fileData writeToFile:filepath atomically:YES];
