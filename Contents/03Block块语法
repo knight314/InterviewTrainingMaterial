@@ -1,1 +1,216 @@
-Q3.1 无参数无返回值，无参数有返回值，有参数无返回值，有参数有返回值的4种情况demoQ3.2 数组的排序，compareBlock是一个参数，通过block可以在后面方便的调用Q3.3 block作为属性，使用typedef 关键字对block属性相关部分做处理Q3.4  
+Q3.1 无参数无返回值，无参数有返回值，有参数无返回值，有参数有返回值的4种情况demo以及调用的代码#无参数，无返回值的blockvoid (^logTime)(void)=^{NSLog(@"time is ==%@",[NSDate date]);};//调用blocklogTime();/*print time is ==2016-05-21 02:13:08 +0000*/#不带参数，有返回值NSDate* (^getNowDate)(void)=^{return [NSDate date];};NSDate *nowDate=getNowDate();NSLog(@"nowDate==%@",nowDate);//    print nowDate==2016-05-21 02:43:24 +0000#有参数，无返回值的blockvoid (^logInput)(NSString *input)=^(NSString *input){NSLog(@"input==%@",input);};//调用logInputlogInput(@"abc");// print input==abc#有参数，有返回值int (^multiplierBy7)(int)=^(int multiplier){return multiplier*7;};int result= multiplierBy7(3);NSLog(@"result==%i",result);// print result==21//有多个参数，有返回值的blockdouble (^calculateCubicVolume)(double ,double ,double ,NSString *)=^(double length,double width,double height,NSString *cubicName){double volume=length*width*height;NSLog(@"cubic name==%@",cubicName);return volume;};//调用blockdouble volume1=calculateCubicVolume(1,2,3,@"cubic demo 1");NSLog(@"volume==%f",volume1);/*printcubic name==cubic demo 1volume==6.000000*/#作为方法的参数__block BOOL found = NO;NSSet *aSet = [NSSet setWithObjects: @"Alpha", @"Beta", @"Gamma", @"X", nil];NSString *string = @"gamma";[aSet enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {if ([obj localizedCaseInsensitiveCompare:string] == NSOrderedSame) {*stop = YES;found = YES;}}];// At this point, found == YESQ3.2 数组的排序，compareBlock是一个参数，通过block可以在后面方便的调用/***  排序的方法**  @param numberArray 输入的数组*  @param comparator  比较2个数字大小的block**  @return 返回排序后的数组*/-(NSArray *)sortNumberWithNumberArray:(NSArray *)numberArraycomparatorBlock:(BOOL(^)(NSNumber *,NSNumber *))comparator{/***  存放排序前的数组*/NSMutableArray *beforeSort=numberArray.mutableCopy;/***  存放排序后的数组*/NSMutableArray *afterSort=[NSMutableArray array];//每次循环确定第j＋1个最大的数字for (int j=0; j<numberArray.count; j++) {//假设第一个元素就是最大的结果NSNumber *maxNumber=[beforeSort firstObject];for (int i=0; i<beforeSort.count; i++) {NSNumber *numberIndex=beforeSort[i];//用比较大小的block进行比较，其实这里并不知道block的内容，只是确定了block的返回值和参数。后续调用的时候，可以进行多种条件的实现BOOL largerThanPreviousMax= comparator(numberIndex,maxNumber);//如果遇到一个比之前最大数字还大的数字，那就把当前最大的数字放在maxNumber里面if (largerThanPreviousMax==YES) {maxNumber=numberIndex.copy;}}//将取到的第j＋1个数移出排序前数组，放入排序后数组[beforeSort removeObject:maxNumber];[afterSort addObject:maxNumber];}return afterSort.copy;}//排序前的数组NSArray *array=@[@1,@(-2),@3,@(-9),@4,@8];//根据数值的大小进行排序BOOL (^comparator)(NSNumber*,NSNumber*)=^(NSNumber *num1,NSNumber *num2){BOOL result=[num1 integerValue]>[num2 integerValue];return result;};NSArray *resultArray=[self sortNumberWithNumberArray:array comparatorBlock:comparator];NSLog(@"resultArray%@",resultArray);/*print   resultArray(8,4,3,1,"-2","-9")*///根据绝对值的大小进行排序BOOL (^absoluteSortComparator)(NSNumber *,NSNumber *)=^(NSNumber *num1,NSNumber *num2){BOOL result=fabs([num1 doubleValue])>fabs([num2 doubleValue]);return result;};NSArray *absoluteSortArray=[self sortNumberWithNumberArray:array comparatorBlock:absoluteSortComparator];NSLog(@"absoluteSortArray%@",absoluteSortArray);/*print  absoluteSortArray("-9",8,4,3,"-2",1)*/Q3.3 block作为属性，使用typedef 关键字对block属性相关部分做处理#作为属性调用//声明block类型的属性#import "HBTestBlock.h"@interface HBTestBlock ()@property(nonatomic, copy) UIView *(^viewGetter)(NSString *imageName); //注意其返回类型为UIView *@end//在另一个类中调用HBTestBlock *objPropertyBlockObj = [[HBTestBlock alloc] init];objPropertyBlockObj.viewGetter = ^(NSString *imageName){//        return [[UIView alloc] init]; //特别注意此处，若对象不匹配，则会报错，设置为nil也会报错。return [self currentView];};objPropertyBlockObj.viewGetter(@"hello"); //实际执行block#使用简化方式的定义#import "ViewController.h"typedef int(^compareBlock)(int a, int b);@interface ViewController ()//声明属性的block//使用简化方式的定义@property (nonatomic,copy) compareBlock compare1;//使用基本方式进行定义@property (nonatomic,copy) int (^compare2)(int a,int b);//void类型block 属性的定义@property (nonatomic,copy) void (^networkFailure)(NSError *error);//对象类型的block属性的定义@property (nonatomic,copy) UIView *(^getAView)(NSString *imageName);@implementation ViewController-(void)viewDidLoad{//赋值属性的blockself.compare1=^(int a,int b){NSLog(@"compare1 a==%d,b==%d,result==%@",a,b,a>b?@"a>b":@"a<=b");return a>b;};self.compare2=^(int a,int b){NSLog(@"compare2 a==%d,b==%d,result==%@",a,b,a>b?@"a>b":@"a<=b");return a>b;};//执行属性的block,这里没有接收返回值if (self.compare1) {self.compare1(5,6);}if (self.compare2) {self.compare2(5,6);}}@end/*print 打印结果compare1 a==5,b==6,result==a<=bcompare2 a==5,b==6,result==a<=b*/Q3.4 定义一个block可以用于UIView的animation动画
+
+    UIView *view=[self.view viewWithTag:1001];
+    [view removeFromSuperview];
+    
+    UIView *redView=[[UIView alloc]initWithFrame:CGRectMake(100, 100, 100, 100)];
+    redView.tag=1001;
+    redView.backgroundColor=[UIColor redColor];
+    [self.view addSubview:redView];
+    [self.view bringSubviewToFront:redView];
+    void (^customAnimationBlock) (void);// define a animation block for view animation
+    customAnimationBlock=^(void){
+        redView.backgroundColor=[UIColor greenColor];
+        NSLog(@"change background color");
+    };
+ 
+    
+   
+    void (^completionBlock)(BOOL finished)=^(BOOL finished){//define a animation complete block for view animation
+    
+        NSLog(@"result ==%@",finished?@"finished":@"not finished");
+    
+    };
+    
+    [UIView animateWithDuration:2 animations:customAnimationBlock completion:completionBlock];
+
+
+Q3.5 定义一个block属性，用于2个界面传值
+
+第一个页面，接收第二个页面的结果，在第一个页面显示最喜欢的数字，在第二个页面完成选择后，第一个页面修改对应的内容
+
+#import <UIKit/UIKit.h>
+
+@interface FavouriteNumberViewController : UIViewController
+
+@end
+//
+//  FavouriteNumberViewController.m
+//  BlockPassValue
+//
+
+//
+
+#import "FavouriteNumberViewController.h"
+
+#import "ChoosingFavouriteNumberViewController.h"
+
+@interface FavouriteNumberViewController ()
+
+@property (nonatomic,weak) UILabel *favouriteNumberLabel;
+
+
+
+@end
+
+@implementation FavouriteNumberViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    UILabel *favouriteNumberLabel=[[UILabel alloc]initWithFrame:CGRectMake(100, 100, 200, 100)];
+    favouriteNumberLabel.font=[UIFont systemFontOfSize:13.0];
+    
+    favouriteNumberLabel.backgroundColor=[UIColor greenColor];
+    
+    [self.view addSubview:favouriteNumberLabel];
+    self.favouriteNumberLabel=favouriteNumberLabel;
+    
+    UIButton *pickNumberButton=[[UIButton alloc]initWithFrame:CGRectMake(100, 200, 200, 100)];
+    
+    [pickNumberButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [pickNumberButton setTitle:@"点击选择数字" forState:UIControlStateNormal];
+    [pickNumberButton addTarget:self action:@selector(pickupNumber) forControlEvents:UIControlEventTouchUpInside];
+    pickNumberButton.backgroundColor=[UIColor orangeColor];
+    
+    [self.view addSubview:pickNumberButton];
+    
+    
+    
+    // Do any additional setup after loading the view.
+}
+
+
+-(void)pickupNumber{
+
+    ChoosingFavouriteNumberViewController *choosingNumberVC=[[ChoosingFavouriteNumberViewController alloc]init];
+    __weak typeof (self) weakSelf=self;
+    choosingNumberVC.chooseNumberBlock=^(NSString *number){
+        weakSelf.favouriteNumberLabel.text=[NSString stringWithFormat:@"最喜欢的数字是%@",number];
+       
+        
+    };
+    
+    [self.navigationController pushViewController:choosingNumberVC animated:YES];
+
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+@end
+
+
+
+
+#import <UIKit/UIKit.h>
+
+typedef  void (^ChooseNumberBlock) (NSString *number) ;
+
+@interface ChoosingFavouriteNumberViewController : UIViewController
+
+@property (nonatomic,copy) ChooseNumberBlock chooseNumberBlock;
+
+@end
+
+
+
+#import "ChoosingFavouriteNumberViewController.h"
+
+@interface ChoosingFavouriteNumberViewController ()
+<UITableViewDataSource,UITableViewDelegate>
+
+@property (nonatomic,weak) UITableView *tableView;
+
+@property (nonatomic,strong) NSArray *numberArray;
+
+@end
+
+@implementation ChoosingFavouriteNumberViewController
+#pragma mark - vc life cycle
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.title=@"请选择你喜欢的数字";
+    UITableView *tableView=[[UITableView alloc]init];
+    tableView.delegate=self;
+    tableView.dataSource=self;
+    [self.view addSubview:tableView];
+    
+    tableView.frame=self.view.bounds;
+    self.tableView=tableView;
+    
+    self.view.backgroundColor=[UIColor whiteColor];
+    
+
+    // Do any additional setup after loading the view.
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - data getter
+
+-(NSArray *)numberArray{
+
+    if (!_numberArray) {
+       
+        NSMutableArray *numberArray=[NSMutableArray array];
+        for (int i=0; i<10; i++) {
+            [numberArray addObject:[NSString stringWithFormat:@"%i",i]];
+        }
+        _numberArray=numberArray.copy;
+    }
+    return _numberArray;
+
+}
+#pragma mark -table view datasource
+
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+
+    return self.numberArray.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    static NSString *cellIdentifier=@"cellIdentifier";
+    UITableViewCell *cell=[tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+    if(!cell){
+    
+        cell=[[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
+    }
+    cell.textLabel.text=self.numberArray[indexPath.row];
+    
+    return cell;
+
+}
+
+#pragma mark - table view delegate
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+
+//调用了之前定义的block内容
+    if (self.chooseNumberBlock) {
+        NSString *selectedNumber=self.numberArray[indexPath.row];
+        self.chooseNumberBlock(selectedNumber);
+    }
+    [self.navigationController popViewControllerAnimated:YES];
+    
+
+}
+
+
+@end
