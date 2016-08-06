@@ -95,6 +95,8 @@
  
 
 2.	Q1.2请写出dispatch_group_t的实践代码
+
+- (void)dispatch_group_t_demo{
    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_async(group, queue, ^{
@@ -112,7 +114,7 @@
         NSLog(@"combine download images");
     });
 
-
+}
 
 3.	Q1.3 请写出dispatch barrier的用法
 -(void)gcdBarrier{
@@ -135,7 +137,10 @@
 
 
 }
+
+
 4.	Q1.4 请写出在子线程中异步下载图片，然后刷新主线程的代码
+- (void)downloadImageAtBackground{
    NSLog(@"before download image");
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
@@ -152,7 +157,7 @@
     });
     
     NSLog(@"end download image");
-
+}
 5.	Q1.5 请写出单例的代码
 
 // 定义一份变量(整个程序运行过程中, 只有1份)

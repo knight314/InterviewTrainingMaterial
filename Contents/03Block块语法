@@ -1,1 +1,45 @@
-Q3.1 无参数无返回值，无参数有返回值，有参数无返回值，有参数有返回值的4种情况demoQ3.2 数组的排序，compareBlock是一个参数，通过block可以在后面方便的调用Q3.3 block作为属性，使用typedef 关键字对block属性相关部分做处理Q3.4  
+﻿Q3.1 无参数无返回值，无参数有返回值，有参数无返回值，有参数有返回值的4种情况demo
+- (void)testBlockWithoutParameterWithoutReturnValue{
+//define
+
+//execute
+
+//log
+
+
+}
+
+- (void)testBlockWithoutParameterWithReturnValue{
+//define
+
+//execute
+
+//log
+
+
+}
+
+- (void)testBlockWithParameterWithoutReturnValue{
+//define
+
+//execute
+
+//log
+
+
+
+
+
+}
+
+- (void)testBlockWithoutParameterWithoutReturnValue{
+
+
+
+}
+
+Q3.2 数组的排序，compareBlock是一个参数，通过block可以在后面方便的调用
+
+Q3.3 block作为属性，使用typedef 关键字对block属性相关部分做处理
+Q3.4 编写可以用于UIView animation的block
+
